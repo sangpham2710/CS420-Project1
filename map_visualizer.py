@@ -38,6 +38,8 @@ class MapGUI:
 
         self.grid = grid
         self.paths = paths
+        self.freq = [[[0 for _ in range(self.num_columns)] for _ in range(
+            self.num_rows)] for _ in range(self.floors)]
 
         self.num_agents = len(self.paths)
         self.current_agent_path_indexes = [0] * self.num_agents
@@ -91,6 +93,12 @@ class MapGUI:
         ]
         self.cell_text = [
             [None for _ in range(self.num_columns)] for _ in range(self.num_rows)
+        ]
+        self.cell_agent = [
+            None for _ in range(self.num_agents)
+        ]
+        self.cell_agent_text = [
+            None for _ in range(self.num_agents)
         ]
 
         # Labels to display information, make it align left with some margin
@@ -166,7 +174,8 @@ class MapGUI:
     def to_end(self):
         # TODO: fix for multiple agents
         # update the current position
-        self.current_agent_path_indexes = [len(path) - 1 for path in self.paths]
+        self.current_agent_path_indexes = [
+            len(path) - 1 for path in self.paths]
         self.current_agent_turn = self.num_agents - 1
         self.current_floor = self.paths[self.current_agent_turn][
             self.current_agent_path_indexes[self.current_agent_turn]
@@ -184,7 +193,8 @@ class MapGUI:
 
         self.current_agent_path_indexes[self.current_agent_turn] -= 1
 
-        self.current_agent_turn = (self.current_agent_turn - 1) % self.num_agents
+        self.current_agent_turn = (
+            self.current_agent_turn - 1) % self.num_agents
 
         self.current_floor = self.paths[self.current_agent_turn][
             self.current_agent_path_indexes[self.current_agent_turn]
@@ -204,7 +214,8 @@ class MapGUI:
 
         self.current_agent_path_indexes[self.current_agent_turn] += 1
 
-        self.current_agent_turn = (self.current_agent_turn + 1) % self.num_agents
+        self.current_agent_turn = (
+            self.current_agent_turn + 1) % self.num_agents
 
         self.current_floor = self.paths[self.current_agent_turn][
             self.current_agent_path_indexes[self.current_agent_turn]
@@ -217,7 +228,8 @@ class MapGUI:
 
     def setup(self):
         self.root.title("CS420-Project1")
-        self.root.geometry(str(MapGUI.WINDOW_WIDTH) + "x" + str(MapGUI.WINDOW_HEIGHT))
+        self.root.geometry(str(MapGUI.WINDOW_WIDTH) +
+                           "x" + str(MapGUI.WINDOW_HEIGHT))
         self.root.resizable(False, False)
         self.root.after(500, self.loop)
 
@@ -228,21 +240,34 @@ class MapGUI:
 
     def draw_grid(self, heatmap=False):
         if heatmap:
-            self.color_grids()
+            self.color_heatmap()
         else:
             self.color_grids()
-            self.color_current_position()
             self.color_starts()
             self.color_targets()
+            self.color_current_position()
+
+    def color_heatmap(self):
+        for row in range(self.num_rows):
+            for col in range(self.num_columns):
+                cell_value = self.freq[self.current_floor][row][col]
+                if cell_value == "-1":
+                    self.draw_cell(
+                        row, col, background_fill=MapGUI.COLOR_BLOCKED)
+                else:
+                    self.draw_cell(
+                        row, col, background_fill=MapGUI.COLOR_EMPTY)
 
     def color_grids(self):
         for row in range(self.num_rows):
             for col in range(self.num_columns):
                 cell_value = self.grid[self.current_floor][row][col]
                 if cell_value == "-1":
-                    self.draw_cell(row, col, background_fill=MapGUI.COLOR_BLOCKED)
+                    self.draw_cell(
+                        row, col, background_fill=MapGUI.COLOR_BLOCKED)
                 elif cell_value == "0":
-                    self.draw_cell(row, col, background_fill=MapGUI.COLOR_EMPTY)
+                    self.draw_cell(
+                        row, col, background_fill=MapGUI.COLOR_EMPTY)
                 elif cell_value.startswith("K"):
                     self.draw_cell(
                         row, col, background_fill=MapGUI.COLOR_KEY, text=cell_value
@@ -274,11 +299,37 @@ class MapGUI:
             current_path_index = self.current_agent_path_indexes[turn]
 
             if path[current_path_index][0] == self.current_floor:
-                self.draw_cell(
+                self.draw_agent(
                     path[current_path_index][1],
                     path[current_path_index][2],
+                    turn,
                     background_fill=MapGUI.COLOR_CURRENT,
+                    text=str(turn + 1),
                 )
+
+    def draw_agent(self, row, col, agent_id, background_fill=None, text=""):
+        x0 = col * self.CELL_SIZE
+        y0 = row * self.CELL_SIZE
+        x1 = x0 + self.CELL_SIZE
+        y1 = y0 + self.CELL_SIZE
+
+        x = (x0 + x1) / 2
+        y = (y0 + y1) / 2
+        if self.cell_agent[agent_id] is None:
+            self.cell_agent[agent_id] = self.canvas.create_oval(
+                x0, y0, x1, y1, outline="black", fill=background_fill
+            )
+            self.cell_agent_text[agent_id] = self.canvas.create_text(
+                x,
+                y,
+                text=text,
+                font=("Arial", int(self.CELL_SIZE / 2.5), "bold"),
+            )
+        else:
+            self.canvas.coords(self.cell_agent[agent_id], x0, y0, x1, y1)
+            self.canvas.itemconfig(
+                self.cell_agent[agent_id], fill=background_fill)
+            self.canvas.coords(self.cell_agent_text[agent_id], x, y)
 
     def color_starts(self):
         for i, start in enumerate(
@@ -315,7 +366,8 @@ class MapGUI:
                 x0, y0, x1, y1, outline="black", fill=background_fill
             )
         else:
-            self.canvas.itemconfig(self.cell_rect[row][col], fill=background_fill)
+            self.canvas.itemconfig(
+                self.cell_rect[row][col], fill=background_fill)
 
         if self.cell_text[row][col] is None:
             # draw text in the center of the cell
@@ -333,4 +385,68 @@ class MapGUI:
 
 
 if __name__ == "__main__":
-    import utils
+    from utils import *
+    from collections import deque
+
+    class BFS:
+        def __init__(self, grid):
+            self.grid = grid
+            self.n = len(grid)
+            self.m = len(grid[0])
+            self.explored = [[False] * self.m for _ in range(self.n)]
+            self.directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+            self.diagonals = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+            self.path = [[(-1, -1)] * self.m for _ in range(self.n)]
+            for i in range(self.n):
+                for j in range(self.m):
+                    if grid[i][j] == "A1":
+                        self.start = (i, j)
+                    elif grid[i][j] == "T1":
+                        self.target = (i, j)
+
+        def is_valid(self, x, y):
+            return 0 <= x < self.n and 0 <= y < self.m and self.grid[x][y] != '-1'
+
+        def process(self):
+            queue = deque([(self.start[0], self.start[1])])
+            self.explored[self.start[0]][self.start[1]] = True
+
+            while queue:
+                x, y = queue.popleft()
+
+                if (x, y) == self.target:
+                    return True
+
+                for dx, dy in self.directions:
+                    nx, ny = x + dx, y + dy
+
+                    if self.is_valid(nx, ny) and not self.explored[nx][ny]:
+                        queue.append((nx, ny))
+                        self.explored[nx][ny] = True
+                        self.path[nx][ny] = (x, y)
+
+                for dx, dy in self.diagonals:
+                    nx, ny = x + dx, y + dy
+
+                    if self.is_valid(nx, ny) and not self.explored[nx][ny] and self.is_valid(x + dx, y) and self.is_valid(x, y + dy):
+                        queue.append((nx, ny))
+                        self.explored[nx][ny] = True
+                        self.path[nx][ny] = (x, y)
+            return False
+
+        def get_path(self):
+            path = []
+            x, y = self.target
+            while (x, y) != (-1, -1):
+                path.append((x, y))
+                x, y = self.path[x][y]
+            return path[::-1]
+
+    grid = map_input("test2.txt")
+    bfs = BFS(grid[0])
+    bfs.process()
+    path = bfs.get_path()
+    paths = [[(0, x, y) for x, y in path]]
+    starts = get_starts(grid)
+    targets = get_targets(grid)
+    gui = MapGUI(Tk(), grid, paths, starts, targets)
