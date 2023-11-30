@@ -1,5 +1,9 @@
 from tkinter import *
 from tkinter import ttk
+from PIL import Image
+from PIL import EpsImagePlugin
+
+EpsImagePlugin.gs_windows_binary = r'./gs10.02.1/bin/gswin64c.exe'
 
 
 class MapGUI:
@@ -26,7 +30,6 @@ class MapGUI:
         self.floors = len(grid)
         self.num_rows = len(grid[0])
         self.num_columns = len(grid[0][0])
-        print(self.floors, self.num_rows, self.num_columns)
 
         self.CELL_SIZE = min(
             MapGUI.WINDOW_HEIGHT // self.num_rows,
@@ -148,6 +151,9 @@ class MapGUI:
 
         ttk.Button(self.control_panel, text="HEATMAP", command=self.toggle_heatmap).grid(
             row=5, column=2, sticky=(W, E), padx=5)
+        # button to export all heatmap data
+        ttk.Button(self.control_panel, text="EXPORT ALL HEATMAP", command=self.export_heatmap).grid(
+            row=5, column=3, columnspan=2, sticky=(W, E), padx=5)
 
         # is_looping
         self.is_looping = True
@@ -157,6 +163,46 @@ class MapGUI:
         self.setup()
         self.draw_grid()
         self.root.mainloop()
+
+    def export_heatmap(self):
+        # remove all the png files in the heatmap-output folder
+        import os
+
+        for file in os.listdir("./heatmap-output"):
+            if file.endswith(".png"):
+                os.remove(os.path.join("./heatmap-output", file))
+
+        # export heatmap image for each agent in each floor
+
+        # set all the agent to the last position
+        self.current_agent_path_indexes = [
+            len(path) - 1 for path in self.paths]
+        self.current_agent_turn = self.num_agents - 1
+
+        for turn, path in enumerate(self.paths):
+            for floor in range(self.floors):
+                self.current_floor = floor
+                self.current_agent_turn = turn
+                self.is_heatmap = True
+                self.draw_grid()
+                filename = "./heatmap-output/heatmap_agent_" + \
+                    str(turn + 1) + "_floor_" + str(floor + 1)
+                self.canvas.postscript(
+                    file=filename + ".eps", colormode='color', pagewidth=1000)
+                # convert eps to png
+                img = Image.open(filename + ".eps")
+                img.convert()
+                img.save(filename + ".png", "png")
+                # close the image
+                img.close()
+
+                # remove the eps file
+                os.remove(filename + ".eps")
+
+        # set all the agent to the first position
+        self.current_agent_path_indexes = [0] * self.num_agents
+        self.current_agent_turn = 0
+        self.is_heatmap = False
 
     def toggle_heatmap(self):
         self.is_heatmap = not self.is_heatmap
