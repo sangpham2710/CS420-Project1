@@ -1,4 +1,5 @@
 from tkinter import *
+from tkinter import ttk
 
 
 class MapGUI:
@@ -19,7 +20,8 @@ class MapGUI:
     COLOR_PATH = "lightblue"
     TCOLOR_PATH = "red"
 
-    def __init__(self, root, grid, paths, starts, targets):
+    def __init__(self, root, grid, paths, starts, targets, points, is_level4=False):
+        self.is_level4 = is_level4
         # initialize the number of floor, the width and height of the grid
         self.floors = len(grid)
         self.num_rows = len(grid[0])
@@ -38,8 +40,7 @@ class MapGUI:
 
         self.grid = grid
         self.paths = paths
-        self.freq = [[[0 for _ in range(self.num_columns)] for _ in range(
-            self.num_rows)] for _ in range(self.floors)]
+        self.points = points
 
         self.num_agents = len(self.paths)
         self.current_agent_path_indexes = [0] * self.num_agents
@@ -70,6 +71,7 @@ class MapGUI:
         self.current_position_var = StringVar()
         self.current_point_var = StringVar()
         self.current_floor_var = StringVar()
+        self.current_agent_turn_var = StringVar()
 
         self.info_panel = Frame(
             self.panel_group,
@@ -102,12 +104,27 @@ class MapGUI:
         ]
 
         # Labels to display information, make it align left with some margin
-        Label(self.info_panel, text="Current Position:").pack(side=TOP)
-        Label(self.info_panel, textvariable=self.current_position_var).pack(side=TOP)
-        Label(self.info_panel, text="Current Point:").pack(side=TOP)
-        Label(self.info_panel, textvariable=self.current_point_var).pack(side=TOP)
-        Label(self.info_panel, text="Current Floor:").pack(side=TOP)
-        Label(self.info_panel, textvariable=self.current_floor_var).pack(side=TOP)
+        font_size = 16  # Change this to the desired font size
+
+        ttk.Label(self.info_panel, text="Position of current agent:", font=(
+            "default", font_size), anchor="w").grid(row=0, column=0, sticky='w', padx=10)
+        ttk.Label(self.info_panel, textvariable=self.current_position_var, font=(
+            "default", font_size), anchor="w").grid(row=0, column=1, sticky='w', padx=10)
+
+        ttk.Label(self.info_panel, text="Current point of agent 1 (A1):", font=(
+            "default", font_size), anchor="w").grid(row=1, column=0, sticky='w', padx=10)
+        ttk.Label(self.info_panel, textvariable=self.current_point_var, font=(
+            "default", font_size), anchor="w").grid(row=1, column=1, sticky='w', padx=10)
+
+        ttk.Label(self.info_panel, text="Current floor:", font=(
+            "default", font_size), anchor="w").grid(row=2, column=0, sticky='w', padx=10)
+        ttk.Label(self.info_panel, textvariable=self.current_floor_var, font=(
+            "default", font_size), anchor="w").grid(row=2, column=1, sticky='w', padx=10)
+
+        ttk.Label(self.info_panel, text="Current agent turn:", font=(
+            "default", font_size), anchor="w").grid(row=3, column=0, sticky='w', padx=10)
+        ttk.Label(self.info_panel, textvariable=self.current_agent_turn_var, font=(
+            "default", font_size), anchor="w").grid(row=3, column=1, sticky='w', padx=10)
 
         # Buttons
         self.control_panel.columnconfigure(0, weight=1)
@@ -115,28 +132,35 @@ class MapGUI:
         self.control_panel.columnconfigure(2, weight=1)
         self.control_panel.columnconfigure(3, weight=1)
         self.control_panel.columnconfigure(4, weight=1)
-        Button(self.control_panel, text="Start", command=self.to_start).grid(
-            row=4, column=0, sticky=(W, E)
-        )
-        Button(self.control_panel, text="Previous", command=self.to_previous).grid(
-            row=4, column=1, sticky=(W, E)
-        )
-        Button(self.control_panel, text="Stop", command=self.toggle_loop).grid(
-            row=4, column=2, sticky=(W, E)
-        )
-        Button(self.control_panel, text="Next", command=self.to_next).grid(
-            row=4, column=3, sticky=(W, E)
-        )
-        Button(self.control_panel, text="End", command=self.to_end).grid(
-            row=4, column=4, sticky=(W, E)
-        )
+        ttk.Button(self.control_panel, text="TO FIRST", command=self.to_start).grid(
+            row=4, column=0, sticky=(W, E), padx=5)
+        ttk.Button(self.control_panel, text="PREVIOUS", command=self.to_previous).grid(
+            row=4, column=1, sticky=(W, E), padx=5)
+
+        self.button_stop = ttk.Button(
+            self.control_panel, text="STOP", command=self.toggle_loop)
+        self.button_stop.grid(row=4, column=2, sticky=(W, E), padx=5)
+
+        ttk.Button(self.control_panel, text="NEXT", command=self.to_next).grid(
+            row=4, column=3, sticky=(W, E), padx=5)
+        ttk.Button(self.control_panel, text="TO LAST", command=self.to_end).grid(
+            row=4, column=4, sticky=(W, E), padx=5)
+
+        ttk.Button(self.control_panel, text="HEATMAP", command=self.toggle_heatmap).grid(
+            row=5, column=2, sticky=(W, E), padx=5)
 
         # is_looping
         self.is_looping = True
 
+        self.is_heatmap = False
+
         self.setup()
         self.draw_grid()
         self.root.mainloop()
+
+    def toggle_heatmap(self):
+        self.is_heatmap = not self.is_heatmap
+        self.draw_grid()
 
     def update_labels(self):
         # change label
@@ -154,9 +178,20 @@ class MapGUI:
                 ][0]
             )
         )
+        self.current_point_var.set(
+            str(
+                self.points[self.current_agent_path_indexes[0]]
+            )
+        )
+        self.current_agent_turn_var.set(
+            str(
+                self.current_agent_turn + 1
+            )
+        )
 
     def toggle_loop(self):
         self.is_looping = not self.is_looping
+        self.button_stop.config(text="STOP" if self.is_looping else "CONTINUE")
 
     def to_start(self):
         # update the current position
@@ -238,8 +273,8 @@ class MapGUI:
             self.to_next()
         self.root.after(500, self.loop)
 
-    def draw_grid(self, heatmap=False):
-        if heatmap:
+    def draw_grid(self):
+        if self.is_heatmap:
             self.color_heatmap()
         else:
             self.color_grids()
@@ -248,15 +283,63 @@ class MapGUI:
             self.color_current_position()
 
     def color_heatmap(self):
+        self.freq = [[[[0 for _ in range(self.num_columns)]
+                       for _ in range(self.num_rows)] for _ in range(self.floors)] for _ in range(self.num_agents)]
+        # calculate the freq[agent_turn][floor][row][col], only to the current agent path index
+        for turn, path in enumerate(self.paths):
+            if len(path) <= 0:
+                continue
+
+            for i in range(self.current_agent_path_indexes[turn] + 1):
+                floor = path[i][0]
+                row = path[i][1]
+                col = path[i][2]
+                self.freq[turn][floor][row][col] += 1
+
+        # calculate the max freq
+        max_freq = 0
+        for turn, path in enumerate(self.paths):
+            if len(path) <= 0:
+                continue
+
+            for floor in range(self.floors):
+                for row in range(self.num_rows):
+                    for col in range(self.num_columns):
+                        if self.freq[turn][floor][row][col] > max_freq:
+                            max_freq = self.freq[turn][floor][row][col]
+
+        # delete all the agents
+        for agent_id in range(self.num_agents):
+            if self.cell_agent[agent_id] is not None:
+                self.canvas.delete(self.cell_agent[agent_id])
+                self.cell_agent[agent_id] = None
+            if self.cell_agent_text[agent_id] is not None:
+                self.canvas.delete(self.cell_agent_text[agent_id])
+                self.cell_agent_text[agent_id] = None
+
+        # color the grids, only in the current floor
         for row in range(self.num_rows):
             for col in range(self.num_columns):
-                cell_value = self.freq[self.current_floor][row][col]
+                cell_value = self.grid[self.current_floor][row][col]
                 if cell_value == "-1":
                     self.draw_cell(
                         row, col, background_fill=MapGUI.COLOR_BLOCKED)
                 else:
-                    self.draw_cell(
-                        row, col, background_fill=MapGUI.COLOR_EMPTY)
+                    cur_freq = self.freq[self.current_agent_turn][self.current_floor][row][col]
+                    if cur_freq == 0:
+                        self.draw_cell(
+                            row, col, background_fill=MapGUI.COLOR_EMPTY)
+                    else:
+                        self.draw_cell(
+                            row, col, background_fill=self.get_heatmap_color(cur_freq, max_freq), text=str(cur_freq)
+                        )
+
+    def get_heatmap_color(self, freq, max_freq):
+        # green to yellow to red
+        # green is the least freq, red is the most freq
+        g = int(255 * (1 - freq / max_freq))
+        r = int(255 * (freq / max_freq))
+        return '#%02x%02x%02x' % (r, g, 0)
 
     def color_grids(self):
         for row in range(self.num_rows):
@@ -344,16 +427,38 @@ class MapGUI:
             )
 
     def color_targets(self):
-        for i, target in enumerate(
-            list(filter(lambda x: x[0] == self.current_floor, self.targets))
-        ):
-            self.draw_cell(
-                target[1],
-                target[2],
-                text="T" + str(i + 1),
-                background_fill=MapGUI.COLOR_TARGET,
-                text_fill=MapGUI.TCOLOR_TARGET,
-            )
+        if not self.is_level4:
+            for i, target in enumerate(
+                list(filter(lambda x: x[0] ==
+                     self.current_floor, self.targets))
+            ):
+                self.draw_cell(
+                    target[1],
+                    target[2],
+                    text="T" + str(i + 1),
+                    background_fill=MapGUI.COLOR_TARGET,
+                    text_fill=MapGUI.TCOLOR_TARGET,
+                )
+        else:
+            # if level 4, then target is the list which is similar to paths
+            # get the current list of targets
+            current_targets = []
+            for i, target in enumerate(self.targets):
+                if target[self.current_agent_path_indexes[i]][0] == self.current_floor:
+                    current_targets.append(
+                        target[self.current_agent_path_indexes[i]])
+                else:
+                    current_targets.append(None)
+
+            for i, target in enumerate(current_targets):
+                if target is not None:
+                    self.draw_cell(
+                        target[1],
+                        target[2],
+                        text="T" + str(i + 1),
+                        background_fill=MapGUI.COLOR_TARGET,
+                        text_fill=MapGUI.TCOLOR_TARGET,
+                    )
 
     def draw_cell(self, row, col, text="", background_fill=None, text_fill="black"):
         x0 = col * self.CELL_SIZE
@@ -382,71 +487,3 @@ class MapGUI:
             )
         else:
             self.canvas.itemconfig(self.cell_text[row][col], text=text)
-
-
-if __name__ == "__main__":
-    from utils import *
-    from collections import deque
-
-    class BFS:
-        def __init__(self, grid):
-            self.grid = grid
-            self.n = len(grid)
-            self.m = len(grid[0])
-            self.explored = [[False] * self.m for _ in range(self.n)]
-            self.directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-            self.diagonals = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
-            self.path = [[(-1, -1)] * self.m for _ in range(self.n)]
-            for i in range(self.n):
-                for j in range(self.m):
-                    if grid[i][j] == "A1":
-                        self.start = (i, j)
-                    elif grid[i][j] == "T1":
-                        self.target = (i, j)
-
-        def is_valid(self, x, y):
-            return 0 <= x < self.n and 0 <= y < self.m and self.grid[x][y] != '-1'
-
-        def process(self):
-            queue = deque([(self.start[0], self.start[1])])
-            self.explored[self.start[0]][self.start[1]] = True
-
-            while queue:
-                x, y = queue.popleft()
-
-                if (x, y) == self.target:
-                    return True
-
-                for dx, dy in self.directions:
-                    nx, ny = x + dx, y + dy
-
-                    if self.is_valid(nx, ny) and not self.explored[nx][ny]:
-                        queue.append((nx, ny))
-                        self.explored[nx][ny] = True
-                        self.path[nx][ny] = (x, y)
-
-                for dx, dy in self.diagonals:
-                    nx, ny = x + dx, y + dy
-
-                    if self.is_valid(nx, ny) and not self.explored[nx][ny] and self.is_valid(x + dx, y) and self.is_valid(x, y + dy):
-                        queue.append((nx, ny))
-                        self.explored[nx][ny] = True
-                        self.path[nx][ny] = (x, y)
-            return False
-
-        def get_path(self):
-            path = []
-            x, y = self.target
-            while (x, y) != (-1, -1):
-                path.append((x, y))
-                x, y = self.path[x][y]
-            return path[::-1]
-
-    grid = map_input("test2.txt")
-    bfs = BFS(grid[0])
-    bfs.process()
-    path = bfs.get_path()
-    paths = [[(0, x, y) for x, y in path]]
-    starts = get_starts(grid)
-    targets = get_targets(grid)
-    gui = MapGUI(Tk(), grid, paths, starts, targets)
