@@ -7,7 +7,7 @@ EpsImagePlugin.gs_windows_binary = r'./gs10.02.1/bin/gswin64c.exe'
 
 
 class MapGUI:
-    TIME_INTERVAL = 250
+    TIME_INTERVAL = 500
     WINDOW_WIDTH = 1366
     WINDOW_HEIGHT = 768
     PANEL_WIDTH = 400
