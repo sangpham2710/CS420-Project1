@@ -7,20 +7,21 @@ EpsImagePlugin.gs_windows_binary = r'./gs10.02.1/bin/gswin64c.exe'
 
 
 class MapGUI:
+    TIME_INTERVAL = 250
     WINDOW_WIDTH = 1366
     WINDOW_HEIGHT = 768
     PANEL_WIDTH = 400
     COLOR_BLOCKED = "#3f3f3f"
     COLOR_EMPTY = "lightgray"
     COLOR_DOOR = "burlywood4"
-    COLOR_ELEVATOR_UP = "gray"
-    COLOR_ELEVATOR_DOWN = "gray"
+    COLOR_ELEVATOR_UP = "orange"
+    COLOR_ELEVATOR_DOWN = "blue"
     COLOR_KEY = "yellow"
     COLOR_START = "brown1"
     TCOLOR_START = "black"
     COLOR_TARGET = "chartreuse3"
     TCOLOR_TARGET = "black"
-    COLOR_CURRENT = "blue"
+    COLOR_CURRENT = "pink"
     COLOR_PATH = "lightblue"
     TCOLOR_PATH = "red"
 
@@ -312,12 +313,12 @@ class MapGUI:
         self.root.geometry(str(MapGUI.WINDOW_WIDTH) +
                            "x" + str(MapGUI.WINDOW_HEIGHT))
         self.root.resizable(False, False)
-        self.root.after(500, self.loop)
+        self.root.after(MapGUI.TIME_INTERVAL, self.loop)
 
     def loop(self):
         if self.is_looping:
             self.to_next()
-        self.root.after(500, self.loop)
+        self.root.after(MapGUI.TIME_INTERVAL, self.loop)
 
     def draw_grid(self):
         if self.is_heatmap:
