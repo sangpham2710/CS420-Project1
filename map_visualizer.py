@@ -422,6 +422,13 @@ class MapGUI:
                     )
 
     def color_current_position(self):
+        for agent_id in range(self.num_agents):
+            if self.cell_agent[agent_id] is not None:
+                self.canvas.delete(self.cell_agent[agent_id])
+                self.cell_agent[agent_id] = None
+            if self.cell_agent_text[agent_id] is not None:
+                self.canvas.delete(self.cell_agent_text[agent_id])
+                self.cell_agent_text[agent_id] = None
         for turn, path in enumerate(self.paths):
             if len(path) <= 0:
                 continue
