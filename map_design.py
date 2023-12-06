@@ -199,38 +199,36 @@ def test(event):
     x = event.x // square_size
     y = event.y // square_size
     char = event.char
+    if map_grid[y][x] is None:
+        map_grid[y][x] = canvas.create_rectangle(x * square_size, y * square_size,
+                                                 (x + 1) * square_size, (y + 1) * square_size, outline='black')
+        # create text in the middle of the cell
+        map_text[y][x] = canvas.create_text(
+            x * square_size + square_size // 2, y * square_size + square_size // 2, text='0', fill='black')
+
     if char.isdigit():
         canvas.itemconfig(map_text[y][x], text=canvas.itemcget(
             map_text[y][x], "text") + char, fill=canvas.itemcget(map_text[y][x], "fill"))
-    if (x, y) != last_cell:
-        if map_grid[y][x] is None:
-            map_grid[y][x] = canvas.create_rectangle(x * square_size, y * square_size,
-                                                     (x + 1) * square_size, (y + 1) * square_size, outline='black')
-            # create text in the middle of the cell
-            map_text[y][x] = canvas.create_text(
-                x * square_size + square_size // 2, y * square_size + square_size // 2, text='0', fill='black')
+    elif char == 'd':
+        canvas.itemconfig(map_grid[y][x], fill='brown')
+        canvas.itemconfig(map_text[y][x], text='D', fill='white')
+    elif char == 'k':
+        canvas.itemconfig(map_grid[y][x], fill='yellow')
+        canvas.itemconfig(map_text[y][x], text='K', fill='black')
+    elif char == 'u':
+        canvas.itemconfig(map_grid[y][x], fill='orange')
+        canvas.itemconfig(map_text[y][x], text='UP', fill='black')
+    elif char == 'o':
+        canvas.itemconfig(map_grid[y][x], fill='blue')
+        canvas.itemconfig(map_text[y][x], text='DO', fill='white')
+    elif char == 'a':
+        canvas.itemconfig(map_grid[y][x], fill='red')
+        canvas.itemconfig(map_text[y][x], text='A', fill='white')
+    elif char == 't':
+        canvas.itemconfig(map_grid[y][x], fill='green')
+        canvas.itemconfig(map_text[y][x], text='T', fill='white')
 
-        elif char == 'd':
-            canvas.itemconfig(map_grid[y][x], fill='brown')
-            canvas.itemconfig(map_text[y][x], text='D', fill='white')
-        elif char == 'k':
-            canvas.itemconfig(map_grid[y][x], fill='yellow')
-            canvas.itemconfig(map_text[y][x], text='K', fill='black')
-        elif char == 'u':
-            canvas.itemconfig(map_grid[y][x], fill='orange')
-            canvas.itemconfig(map_text[y][x], text='UP', fill='black')
-        elif char == 'o':
-            canvas.itemconfig(map_grid[y][x], fill='blue')
-            canvas.itemconfig(map_text[y][x], text='DO', fill='white')
-        elif char == 'a':
-            canvas.itemconfig(map_grid[y][x], fill='red')
-            canvas.itemconfig(map_text[y][x], text='A', fill='white')
-        elif char == 't':
-            canvas.itemconfig(map_grid[y][x], fill='green')
-            canvas.itemconfig(map_text[y][x], text='T', fill='white')
-        # if number
-
-        last_cell = (x, y)
+    last_cell = (x, y)
 
 
 def do_nothing(event):
