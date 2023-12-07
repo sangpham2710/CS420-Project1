@@ -8,9 +8,9 @@ EpsImagePlugin.gs_windows_binary = r'./gs10.02.1/bin/gswin64c.exe'
 
 class MapGUI:
     TIME_INTERVAL = 500
-    WINDOW_WIDTH = 1366
-    WINDOW_HEIGHT = 768
-    PANEL_WIDTH = 400
+    WINDOW_WIDTH = 1500
+    WINDOW_HEIGHT = 1000
+    PANEL_WIDTH = 200
     COLOR_BLOCKED = "#3f3f3f"
     COLOR_EMPTY = "lightgray"
     COLOR_DOOR = "burlywood4"
