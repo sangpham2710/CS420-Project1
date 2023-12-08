@@ -49,9 +49,6 @@ class MapGUI:
         self.num_agents = len(self.paths)
         self.current_agent_path_indexes = [0] * self.num_agents
         self.current_agent_turn = 0
-        self.current_floor = self.paths[self.current_agent_turn][
-            self.current_agent_path_indexes[self.current_agent_turn]
-        ][0]
 
         self.starts = starts
         self.targets = targets
@@ -75,6 +72,7 @@ class MapGUI:
         self.current_position_var = StringVar()
         self.current_point_var = StringVar()
         self.current_floor_var = StringVar()
+        self.current_agent_var = StringVar()
         self.current_agent_turn_var = StringVar()
 
         self.info_panel = Frame(
@@ -120,15 +118,20 @@ class MapGUI:
         ttk.Label(self.info_panel, textvariable=self.current_point_var, font=(
             "default", font_size), anchor="w").grid(row=1, column=1, sticky='w', padx=10)
 
-        ttk.Label(self.info_panel, text="Current floor:", font=(
+        ttk.Label(self.info_panel, text="Current viewing floor:", font=(
             "default", font_size), anchor="w").grid(row=2, column=0, sticky='w', padx=10)
         ttk.Label(self.info_panel, textvariable=self.current_floor_var, font=(
             "default", font_size), anchor="w").grid(row=2, column=1, sticky='w', padx=10)
 
-        ttk.Label(self.info_panel, text="Current agent turn:", font=(
+        ttk.Label(self.info_panel, text="Current viewing agent:", font=(
             "default", font_size), anchor="w").grid(row=3, column=0, sticky='w', padx=10)
-        ttk.Label(self.info_panel, textvariable=self.current_agent_turn_var, font=(
+        ttk.Label(self.info_panel, textvariable=self.current_agent_var, font=(
             "default", font_size), anchor="w").grid(row=3, column=1, sticky='w', padx=10)
+
+        ttk.Label(self.info_panel, text="Current agent turn:", font=(
+            "default", font_size), anchor="w").grid(row=4, column=0, sticky='w', padx=10)
+        ttk.Label(self.info_panel, textvariable=self.current_agent_turn_var, font=(
+            "default", font_size), anchor="w").grid(row=4, column=1, sticky='w', padx=10)
 
         # Buttons
         self.control_panel.columnconfigure(0, weight=1)
@@ -156,6 +159,17 @@ class MapGUI:
         ttk.Button(self.control_panel, text="EXPORT ALL HEATMAP", command=self.export_heatmap).grid(
             row=5, column=3, columnspan=2, sticky=(W, E), padx=5)
 
+        self.focus_mode = 'agent'
+        self.current_agent_focus = 0
+        self.current_floor_focus = 0
+        # button to switch floor (rotate the current floor)
+        ttk.Button(self.control_panel, text="SWITCH FLOOR", command=self.switch_floor).grid(
+            row=6, column=2, sticky=(W, E), padx=5)
+
+        # button to switch agent (rotate the current agent)
+        ttk.Button(self.control_panel, text="SWITCH AGENT", command=self.switch_agent).grid(
+            row=6, column=3, sticky=(W, E), padx=5)
+
         # is_looping
         self.is_looping = True
 
@@ -164,6 +178,34 @@ class MapGUI:
         self.setup()
         self.draw_grid()
         self.root.mainloop()
+
+    def get_current_floor(self):
+        if self.focus_mode == 'agent':
+            return self.paths[self.current_agent_focus][
+                self.current_agent_path_indexes[self.current_agent_focus]
+            ][0]
+        else:
+            return self.current_floor_focus
+
+    def switch_floor(self):
+        # switch the current floor
+        if self.focus_mode == 'agent':
+            self.focus_mode = 'floor'
+        else:
+            self.current_floor_focus = (
+                self.current_floor_focus + 1) % self.floors
+        self.update_labels()
+        self.draw_grid()
+
+    def switch_agent(self):
+        # switch the current agent
+        if self.focus_mode == 'floor':
+            self.focus_mode = 'agent'
+        else:
+            self.current_agent_focus = (
+                self.current_agent_focus + 1) % self.num_agents
+        self.update_labels()
+        self.draw_grid()
 
     def export_heatmap(self):
         # remove all the png files in the heatmap-output folder
@@ -182,7 +224,8 @@ class MapGUI:
 
         for turn, path in enumerate(self.paths):
             for floor in range(self.floors):
-                self.current_floor = floor
+                self.focus_mode = 'floor'
+                self.current_floor_focus = floor
                 self.current_agent_turn = turn
                 self.is_heatmap = True
                 self.draw_grid()
@@ -220,9 +263,12 @@ class MapGUI:
         )
         self.current_floor_var.set(
             str(
-                self.paths[self.current_agent_turn][
-                    self.current_agent_path_indexes[self.current_agent_turn]
-                ][0]
+                self.get_current_floor()
+            )
+        )
+        self.current_agent_var.set(
+            str(
+                self.current_agent_focus + 1 if self.focus_mode == 'agent' else 'N/A'
             )
         )
         self.current_point_var.set(
@@ -244,9 +290,6 @@ class MapGUI:
         # update the current position
         self.current_agent_path_indexes = [0] * self.num_agents
         self.current_agent_turn = 0
-        self.current_floor = self.paths[self.current_agent_turn][
-            self.current_agent_path_indexes[self.current_agent_turn]
-        ][0]
 
         # update the labels
         self.update_labels()
@@ -254,14 +297,9 @@ class MapGUI:
         self.draw_grid()
 
     def to_end(self):
-        # TODO: fix for multiple agents
-        # update the current position
         self.current_agent_path_indexes = [
             len(path) - 1 for path in self.paths]
-        self.current_agent_turn = self.num_agents - 1
-        self.current_floor = self.paths[self.current_agent_turn][
-            self.current_agent_path_indexes[self.current_agent_turn]
-        ][0]
+        self.current_agent_turn = 0
 
         # update the labels
         self.update_labels()
@@ -277,10 +315,6 @@ class MapGUI:
 
         self.current_agent_turn = (
             self.current_agent_turn - 1) % self.num_agents
-
-        self.current_floor = self.paths[self.current_agent_turn][
-            self.current_agent_path_indexes[self.current_agent_turn]
-        ][0]
 
         # update the labels
         self.update_labels()
@@ -298,10 +332,6 @@ class MapGUI:
 
         self.current_agent_turn = (
             self.current_agent_turn + 1) % self.num_agents
-
-        self.current_floor = self.paths[self.current_agent_turn][
-            self.current_agent_path_indexes[self.current_agent_turn]
-        ][0]
 
         # update the labels
         self.update_labels()
@@ -367,12 +397,13 @@ class MapGUI:
         # color the grids, only in the current floor
         for row in range(self.num_rows):
             for col in range(self.num_columns):
-                cell_value = self.grid[self.current_floor][row][col]
+                cell_value = self.grid[self.get_current_floor()][row][col]
                 if cell_value == "-1":
                     self.draw_cell(
                         row, col, background_fill=MapGUI.COLOR_BLOCKED)
                 else:
-                    cur_freq = self.freq[self.current_agent_turn][self.current_floor][row][col]
+                    cur_freq = self.freq[self.current_agent_turn][self.get_current_floor(
+                    )][row][col]
                     if cur_freq == 0:
                         self.draw_cell(
                             row, col, background_fill=MapGUI.COLOR_EMPTY)
@@ -391,7 +422,7 @@ class MapGUI:
     def color_grids(self):
         for row in range(self.num_rows):
             for col in range(self.num_columns):
-                cell_value = self.grid[self.current_floor][row][col]
+                cell_value = self.grid[self.get_current_floor()][row][col]
                 if cell_value == "-1":
                     self.draw_cell(
                         row, col, background_fill=MapGUI.COLOR_BLOCKED)
@@ -435,7 +466,7 @@ class MapGUI:
 
             current_path_index = self.current_agent_path_indexes[turn]
 
-            if path[current_path_index][0] == self.current_floor:
+            if path[current_path_index][0] == self.get_current_floor():
                 self.draw_agent(
                     path[current_path_index][1],
                     path[current_path_index][2],
@@ -470,7 +501,8 @@ class MapGUI:
 
     def color_starts(self):
         for i, start in enumerate(
-            list(filter(lambda x: x[0] == self.current_floor, self.starts))
+            list(filter(lambda x: x[0] ==
+                 self.get_current_floor(), self.starts))
         ):
             self.draw_cell(
                 start[1],
@@ -484,7 +516,7 @@ class MapGUI:
         if not self.is_level4:
             for i, target in enumerate(
                 list(filter(lambda x: x[0] ==
-                     self.current_floor, self.targets))
+                     self.get_current_floor(), self.targets))
             ):
                 self.draw_cell(
                     target[1],
@@ -498,7 +530,7 @@ class MapGUI:
             # get the current list of targets
             current_targets = []
             for i, target in enumerate(self.targets):
-                if target[self.current_agent_path_indexes[i]][0] == self.current_floor:
+                if target[self.current_agent_path_indexes[i]][0] == self.get_current_floor():
                     current_targets.append(
                         target[self.current_agent_path_indexes[i]])
                 else:
