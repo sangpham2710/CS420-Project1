@@ -308,13 +308,13 @@ class MapGUI:
 
     def to_previous(self, redraw=True):
         # update the current position
-        if self.current_agent_path_indexes[self.current_agent_turn] - 1 < 0:
-            return
+        self.current_agent_turn = (
+            self.current_agent_turn - 1) % self.num_agents
 
         self.current_agent_path_indexes[self.current_agent_turn] -= 1
 
-        self.current_agent_turn = (
-            self.current_agent_turn - 1) % self.num_agents
+        if self.current_agent_path_indexes[self.current_agent_turn] < 0:
+            self.current_agent_path_indexes[self.current_agent_turn] = 0
 
         # update the labels
         self.update_labels()
