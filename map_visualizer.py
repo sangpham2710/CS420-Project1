@@ -27,7 +27,6 @@ class MapGUI:
 
     def __init__(self, root, grid, paths, starts, targets, points, is_level4=False):
         self.is_level4 = is_level4
-        # initialize the number of floor, the width and height of the grid
         self.floors = len(grid)
         self.num_rows = len(grid[0])
         self.num_columns = len(grid[0][0])
@@ -37,10 +36,7 @@ class MapGUI:
             (MapGUI.WINDOW_WIDTH - MapGUI.PANEL_WIDTH) // self.num_columns,
         )
 
-        # tkinter gui handler
         self.root = root
-
-        # initialize information
 
         self.grid = grid
         self.paths = paths
@@ -105,8 +101,7 @@ class MapGUI:
             None for _ in range(self.num_agents)
         ]
 
-        # Labels to display information, make it align left with some margin
-        font_size = 16  # Change this to the desired font size
+        font_size = 16
 
         ttk.Label(self.info_panel, text="Position of current agent:", font=(
             "default", font_size), anchor="w").grid(row=0, column=0, sticky='w', padx=10)
@@ -133,7 +128,6 @@ class MapGUI:
         ttk.Label(self.info_panel, textvariable=self.current_agent_turn_var, font=(
             "default", font_size), anchor="w").grid(row=4, column=1, sticky='w', padx=10)
 
-        # Buttons
         self.control_panel.columnconfigure(0, weight=1)
         self.control_panel.columnconfigure(1, weight=1)
         self.control_panel.columnconfigure(2, weight=1)
@@ -155,22 +149,18 @@ class MapGUI:
 
         ttk.Button(self.control_panel, text="HEATMAP", command=self.toggle_heatmap).grid(
             row=5, column=2, sticky=(W, E), padx=5)
-        # button to export all heatmap data
         ttk.Button(self.control_panel, text="EXPORT ALL HEATMAP", command=self.export_heatmap).grid(
             row=5, column=3, columnspan=2, sticky=(W, E), padx=5)
 
         self.focus_mode = 'agent'
         self.current_agent_focus = 0
         self.current_floor_focus = 0
-        # button to switch floor (rotate the current floor)
         ttk.Button(self.control_panel, text="SWITCH FLOOR", command=self.switch_floor).grid(
             row=6, column=2, sticky=(W, E), padx=5)
 
-        # button to switch agent (rotate the current agent)
         ttk.Button(self.control_panel, text="SWITCH AGENT", command=self.switch_agent).grid(
             row=6, column=3, sticky=(W, E), padx=5)
 
-        # is_looping
         self.is_looping = True
 
         self.is_heatmap = False
@@ -188,7 +178,6 @@ class MapGUI:
             return self.current_floor_focus
 
     def switch_floor(self):
-        # switch the current floor
         if self.focus_mode == 'agent':
             self.focus_mode = 'floor'
         else:
@@ -198,7 +187,6 @@ class MapGUI:
         self.draw_grid()
 
     def switch_agent(self):
-        # switch the current agent
         if self.focus_mode == 'floor':
             self.focus_mode = 'agent'
         else:
@@ -208,16 +196,12 @@ class MapGUI:
         self.draw_grid()
 
     def export_heatmap(self):
-        # remove all the png files in the heatmap-output folder
         import os
 
         for file in os.listdir("./heatmap-output"):
             if file.endswith(".png"):
                 os.remove(os.path.join("./heatmap-output", file))
 
-        # export heatmap image for each agent in each floor
-
-        # set all the agent to the last position
         self.current_agent_path_indexes = [
             len(path) - 1 for path in self.paths]
         self.current_agent_turn = self.num_agents - 1
@@ -233,17 +217,13 @@ class MapGUI:
                     str(turn + 1) + "_floor_" + str(floor + 1)
                 self.canvas.postscript(
                     file=filename + ".eps", colormode='color', pagewidth=1000)
-                # convert eps to png
                 img = Image.open(filename + ".eps")
                 img.convert()
                 img.save(filename + ".png", "png")
-                # close the image
                 img.close()
 
-                # remove the eps file
                 os.remove(filename + ".eps")
 
-        # set all the agent to the first position
         self.current_agent_path_indexes = [0] * self.num_agents
         self.current_agent_turn = 0
         self.is_heatmap = False
@@ -253,7 +233,6 @@ class MapGUI:
         self.draw_grid()
 
     def update_labels(self):
-        # change label
         self.current_position_var.set(
             str(
                 self.paths[self.current_agent_turn][
@@ -287,11 +266,9 @@ class MapGUI:
         self.button_stop.config(text="STOP" if self.is_looping else "CONTINUE")
 
     def to_start(self):
-        # update the current position
         self.current_agent_path_indexes = [0] * self.num_agents
         self.current_agent_turn = 0
 
-        # update the labels
         self.update_labels()
 
         self.draw_grid()
@@ -301,13 +278,11 @@ class MapGUI:
             len(path) - 1 for path in self.paths]
         self.current_agent_turn = 0
 
-        # update the labels
         self.update_labels()
 
         self.draw_grid()
 
     def to_previous(self, redraw=True):
-        # update the current position
         self.current_agent_turn = (
             self.current_agent_turn - 1) % self.num_agents
 
@@ -316,13 +291,11 @@ class MapGUI:
         if self.current_agent_path_indexes[self.current_agent_turn] < 0:
             self.current_agent_path_indexes[self.current_agent_turn] = 0
 
-        # update the labels
         self.update_labels()
 
         self.draw_grid()
 
     def to_next(self, redraw=True):
-        # update the current position
         if self.current_agent_path_indexes[self.current_agent_turn] + 1 >= len(
             self.paths[self.current_agent_turn]
         ):
@@ -333,7 +306,6 @@ class MapGUI:
         self.current_agent_turn = (
             self.current_agent_turn + 1) % self.num_agents
 
-        # update the labels
         self.update_labels()
 
         self.draw_grid()
@@ -362,7 +334,6 @@ class MapGUI:
     def color_heatmap(self):
         self.freq = [[[[0 for _ in range(self.num_columns)]
                        for _ in range(self.num_rows)] for _ in range(self.floors)] for _ in range(self.num_agents)]
-        # calculate the freq[agent_turn][floor][row][col], only to the current agent path index
         for turn, path in enumerate(self.paths):
             if len(path) <= 0:
                 continue
@@ -373,7 +344,6 @@ class MapGUI:
                 col = path[i][2]
                 self.freq[turn][floor][row][col] += 1
 
-        # calculate the max freq
         max_freq = 0
         for turn, path in enumerate(self.paths):
             if len(path) <= 0:
@@ -385,7 +355,6 @@ class MapGUI:
                         if self.freq[turn][floor][row][col] > max_freq:
                             max_freq = self.freq[turn][floor][row][col]
 
-        # delete all the agents
         for agent_id in range(self.num_agents):
             if self.cell_agent[agent_id] is not None:
                 self.canvas.delete(self.cell_agent[agent_id])
@@ -394,7 +363,6 @@ class MapGUI:
                 self.canvas.delete(self.cell_agent_text[agent_id])
                 self.cell_agent_text[agent_id] = None
 
-        # color the grids, only in the current floor
         for row in range(self.num_rows):
             for col in range(self.num_columns):
                 cell_value = self.grid[self.get_current_floor()][row][col]
@@ -413,8 +381,6 @@ class MapGUI:
                         )
 
     def get_heatmap_color(self, freq, max_freq):
-        # green to yellow to red
-        # green is the least freq, red is the most freq
         g = int(255 * (1 - freq / max_freq))
         r = int(255 * (freq / max_freq))
         return '#%02x%02x%02x' % (r, g, 0)
@@ -526,8 +492,6 @@ class MapGUI:
                     text_fill=MapGUI.TCOLOR_TARGET,
                 )
         else:
-            # if level 4, then target is the list which is similar to paths
-            # get the current list of targets
             current_targets = []
             for i, target in enumerate(self.targets):
                 if target[self.current_agent_path_indexes[i]][0] == self.get_current_floor():
@@ -561,7 +525,6 @@ class MapGUI:
                 self.cell_rect[row][col], fill=background_fill)
 
         if self.cell_text[row][col] is None:
-            # draw text in the center of the cell
             x = (x0 + x1) / 2
             y = (y0 + y1) / 2
             self.cell_text[row][col] = self.canvas.create_text(

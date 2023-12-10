@@ -3,14 +3,13 @@ from tkinter import filedialog
 
 root = tk.Tk()
 root.title("Map Editor")
-# Create canvas for the grid
+
 canvas = tk.Canvas(root, width=900, height=900, bg='white')
 canvas.pack(side=tk.LEFT)
-# Create frame for file dialogs
+
 frame = tk.Frame(root)
 frame.pack(side=tk.RIGHT, padx=10)
 
-# Set the size of each square in the grid
 m = n = 20  # Number of rows and columns
 square_size = 900 // max(m, n)
 
@@ -25,8 +24,6 @@ char_dict = {'brown': 'D', 'yellow': 'K', 'gray': 'U', 'red': 'A',
 
 
 def load_map():
-    # get the grid from the clipboard and convert it into a grid
-
     global root, map_grid, map_text, char_dict
     grid_str = root.clipboard_get()
     print(repr(str(grid_str)))
@@ -91,17 +88,6 @@ def load_map():
 
 
 def copy_map():
-    # convert the grid into a string and copy it to the clipboard
-    # the grid should be of the type
-
-    # [floor1]
-    # -1,0,0,A1,0
-    # 0,0,0,-1,0
-    # -1,-1,-1,0,0
-    # 0,T1,0,0,0
-    # -1,0,0,0,0
-
-    # convert
     global root, map_grid, char_dict, map_text
     grid_str = ""
 
@@ -113,7 +99,6 @@ def copy_map():
     root.clipboard_append(grid_str)
 
 
-# Create buttons for loading and saving map
 load_button = tk.Button(
     frame, text="Load Map from clipboard", command=load_map)
 load_button.pack(pady=10)
@@ -121,7 +106,6 @@ load_button.pack(pady=10)
 copy_button = tk.Button(frame, text="Copy Map to clipboard", command=copy_map)
 copy_button.pack(pady=10)
 
-# create hints for the user
 hint_label = tk.Label(
     frame, text="Left click to block, right click to unblock")
 hint_label.pack(pady=10)
@@ -156,7 +140,7 @@ def update_dimensions(val):
 clear_button = tk.Button(frame, text="Clear", command=lambda: update_dimensions(
     dimensions_slider.get()))
 clear_button.pack(pady=10)
-# Create a slider for changing the number of rows and columns
+
 dimensions_slider = tk.Scale(frame, from_=5, to=100,
                              orient=tk.HORIZONTAL, command=update_dimensions)
 dimensions_slider.set(20)
@@ -202,7 +186,6 @@ def test(event):
     if map_grid[y][x] is None:
         map_grid[y][x] = canvas.create_rectangle(x * square_size, y * square_size,
                                                  (x + 1) * square_size, (y + 1) * square_size, outline='black')
-        # create text in the middle of the cell
         map_text[y][x] = canvas.create_text(
             x * square_size + square_size // 2, y * square_size + square_size // 2, text='0', fill='black')
 
